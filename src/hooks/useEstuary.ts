@@ -24,6 +24,28 @@ export interface EstuaryConfig {
   playerId: string;
 }
 
+export interface EstuarySettings {
+  voiceTransport: "auto" | "websocket" | "livekit";
+  autoReconnect: boolean;
+  maxReconnectAttempts: number;
+  realtimeMemory: boolean;
+  autoInterruptOnSpeech: boolean;
+  suppressMicDuringPlayback: boolean;
+  audioSampleRate: number;
+  debug: boolean;
+}
+
+export const DEFAULT_SETTINGS: EstuarySettings = {
+  voiceTransport: "auto",
+  autoReconnect: true,
+  maxReconnectAttempts: 5,
+  realtimeMemory: false,
+  autoInterruptOnSpeech: true,
+  suppressMicDuringPlayback: false,
+  audioSampleRate: 16000,
+  debug: true,
+};
+
 export function useEstuary() {
   const clientRef = useRef<EstuaryClient | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>(
@@ -50,17 +72,21 @@ export function useEstuary() {
   }, [cleanup]);
 
   const connect = useCallback(
-    async (config: EstuaryConfig) => {
+    async (config: EstuaryConfig, settings: EstuarySettings = DEFAULT_SETTINGS) => {
       cleanup();
       setError(null);
       setMessages([]);
 
       const client = new EstuaryClient({
         ...config,
-        autoReconnect: true,
-        maxReconnectAttempts: 5,
-        debug: true,
-        voiceTransport: "auto",
+        voiceTransport: settings.voiceTransport,
+        autoReconnect: settings.autoReconnect,
+        maxReconnectAttempts: settings.maxReconnectAttempts,
+        realtimeMemory: settings.realtimeMemory,
+        autoInterruptOnSpeech: settings.autoInterruptOnSpeech,
+        suppressMicDuringPlayback: settings.suppressMicDuringPlayback,
+        audioSampleRate: settings.audioSampleRate,
+        debug: settings.debug,
       });
 
       clientRef.current = client;

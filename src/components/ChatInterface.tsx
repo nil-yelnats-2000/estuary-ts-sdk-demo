@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect, useCallback, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ConnectionState } from "@estuary-ai/sdk";
-import { useEstuary, type EstuaryConfig } from "@/hooks/useEstuary";
+import { useEstuary, type EstuaryConfig, type EstuarySettings, DEFAULT_SETTINGS } from "@/hooks/useEstuary";
 import CharacterAvatar, { type CharacterState } from "./CharacterAvatar";
 import MemoryPanel from "./MemoryPanel";
+import SettingsDrawer from "./SettingsDrawer";
 
 function encodeConfig(config: EstuaryConfig): string {
   return btoa(JSON.stringify(config));
@@ -75,6 +76,8 @@ export default function ChatInterface() {
   const [config, setConfig] = useState<EstuaryConfig | null>(null);
   const [textInput, setTextInput] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<EstuarySettings>(DEFAULT_SETTINGS);
   const [copiedField, setCopiedField] = useState<"url" | "hash" | null>(null);
   const [rightPanel, setRightPanel] = useState<"chat" | "memory">("chat");
   const [splitPct, setSplitPct] = useState(50);
@@ -103,9 +106,9 @@ export default function ChatInterface() {
   useEffect(() => {
     if (config && !connectAttemptedRef.current) {
       connectAttemptedRef.current = true;
-      connect(config).catch(() => {});
+      connect(config, settings).catch(() => {});
     }
-  }, [config, connect]);
+  }, [config, connect, settings]);
 
   // Drag-to-resize
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -191,6 +194,15 @@ export default function ChatInterface() {
     disconnect();
     router.push("/connect");
   }, [disconnect, router]);
+
+  const handleReconnect = useCallback(() => {
+    if (!config) return;
+    connectAttemptedRef.current = false;
+    disconnect();
+    connect(config, settings).catch(() => {});
+    connectAttemptedRef.current = true;
+    setShowSettings(false);
+  }, [config, settings, disconnect, connect]);
 
   const handleSendText = (e: FormEvent) => {
     e.preventDefault();
@@ -308,6 +320,17 @@ export default function ChatInterface() {
             </button>
 
           </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-accent-light hover:border-accent/50 transition"
+            title="Settings"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            Settings
+          </button>
           <button
             onClick={handleDisconnect}
             className="px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-danger hover:border-danger/50 transition"
@@ -563,6 +586,16 @@ export default function ChatInterface() {
           )}
         </div>
       </div>
+
+      {/* Settings drawer */}
+      <SettingsDrawer
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onChange={setSettings}
+        onReconnect={handleReconnect}
+        isConnected={isConnected}
+      />
     </div>
   );
 }
