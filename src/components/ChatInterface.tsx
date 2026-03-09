@@ -307,67 +307,6 @@ export default function ChatInterface() {
               Share
             </button>
 
-            {showShareModal && (
-              <div className="absolute right-0 top-full mt-2 w-96 rounded-xl border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Share Session</p>
-                    <button
-                      onClick={() => setShowShareModal(false)}
-                      className="text-muted hover:text-foreground transition"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 6 6 18M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-muted leading-relaxed">
-                    Share the URL or hash so others can connect to this character.
-                  </p>
-
-                  {/* URL row */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Full URL</label>
-                    <div className="flex gap-2 items-center">
-                      <div className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-[11px] font-mono text-muted truncate select-all" title={shareUrl}>
-                        {shareUrl}
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(shareUrl, "url")}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
-                          copiedField === "url"
-                            ? "bg-success/20 text-success border border-success/30"
-                            : "bg-accent text-white hover:bg-accent-light"
-                        }`}
-                      >
-                        {copiedField === "url" ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Hash row */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Session Hash</label>
-                    <div className="flex gap-2 items-center">
-                      <div className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-[11px] font-mono text-muted truncate select-all" title={shareHash}>
-                        {shareHash}
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(shareHash, "hash")}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
-                          copiedField === "hash"
-                            ? "bg-success/20 text-success border border-success/30"
-                            : "bg-accent text-white hover:bg-accent-light"
-                        }`}
-                      >
-                        {copiedField === "hash" ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
           <button
             onClick={handleDisconnect}
@@ -377,6 +316,69 @@ export default function ChatInterface() {
           </button>
         </div>
       </header>
+
+      {/* Share modal - rendered fixed so it's never clipped */}
+      {showShareModal && (
+        <div ref={shareRef} className="fixed top-14 right-4 w-96 rounded-xl border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
+          <div className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Share Session</p>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-muted hover:text-foreground transition"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-muted leading-relaxed">
+              Share the URL or hash so others can connect to this character.
+            </p>
+
+            {/* URL row */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Full URL</label>
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-[11px] font-mono text-muted truncate select-all" title={shareUrl}>
+                  {shareUrl}
+                </div>
+                <button
+                  onClick={() => copyToClipboard(shareUrl, "url")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+                    copiedField === "url"
+                      ? "bg-success/20 text-success border border-success/30"
+                      : "bg-accent text-white hover:bg-accent-light"
+                  }`}
+                >
+                  {copiedField === "url" ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            {/* Hash row */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Session Hash</label>
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-[11px] font-mono text-muted truncate select-all" title={shareHash}>
+                  {shareHash}
+                </div>
+                <button
+                  onClick={() => copyToClipboard(shareHash, "hash")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+                    copiedField === "hash"
+                      ? "bg-success/20 text-success border border-success/30"
+                      : "bg-accent text-white hover:bg-accent-light"
+                  }`}
+                >
+                  {copiedField === "hash" ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error toast */}
       {error && (
