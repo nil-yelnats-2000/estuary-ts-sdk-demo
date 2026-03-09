@@ -36,6 +36,8 @@ export default function ConnectPage() {
     playerId: `demo-user-${Math.random().toString(36).slice(2, 8)}`,
   });
   const [isFromLink, setIsFromLink] = useState(false);
+  const [hashInput, setHashInput] = useState("");
+  const [hashError, setHashError] = useState<string | null>(null);
 
   // Restore saved config or parse shared link
   useEffect(() => {
@@ -163,6 +165,50 @@ export default function ConnectPage() {
               Connect
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted">or join via session hash</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* Hash import */}
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+            <label className="block text-xs font-medium text-muted">Session Hash</label>
+            <p className="text-[11px] text-muted leading-relaxed">
+              Paste a session hash from someone who shared their session with you.
+            </p>
+            <input
+              type="text"
+              value={hashInput}
+              onChange={(e) => {
+                setHashInput(e.target.value);
+                setHashError(null);
+              }}
+              className="w-full px-3 py-2 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono"
+              placeholder="Paste session hash here..."
+            />
+            {hashError && (
+              <p className="text-xs text-danger">{hashError}</p>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                const parsed = decodeConfig(hashInput.trim());
+                if (parsed) {
+                  sessionStorage.setItem("estuary-config", JSON.stringify(parsed));
+                  router.push("/chat");
+                } else {
+                  setHashError("Invalid hash. Make sure you copied the full session hash.");
+                }
+              }}
+              disabled={!hashInput.trim()}
+              className="w-full py-2.5 rounded-xl border border-accent/50 text-accent-light text-sm font-medium hover:bg-accent/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Join Session
+            </button>
+          </div>
 
           <p className="text-xs text-center text-muted mt-6">
             Powered by{" "}

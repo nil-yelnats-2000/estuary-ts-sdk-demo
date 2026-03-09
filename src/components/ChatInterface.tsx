@@ -81,6 +81,7 @@ export default function ChatInterface() {
   const isDraggingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const shareRef = useRef<HTMLDivElement>(null);
   const connectAttemptedRef = useRef(false);
   const isConnected = connectionState === ConnectionState.Connected;
 
@@ -144,6 +145,18 @@ export default function ChatInterface() {
     };
   }, []);
 
+  // Close share modal on click outside
+  useEffect(() => {
+    if (!showShareModal) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShowShareModal(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showShareModal]);
+
   // Derive character state
   const hasPendingBotMessage = useMemo(
     () => messages.some((m) => m.role === "bot" && !m.isFinal),
@@ -190,9 +203,35 @@ export default function ChatInterface() {
   const shareUrl = config ? `${window.location.origin}/connect#${shareHash}` : "";
 
   const copyToClipboard = useCallback((text: string, field: "url" | "hash") => {
-    navigator.clipboard.writeText(text).catch(() => {});
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedField(field);
+        setTimeout(() => setCopiedField(null), 2000);
+      }).catch(() => {
+        // Fallback for when clipboard API fails
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        setCopiedField(field);
+        setTimeout(() => setCopiedField(null), 2000);
+      });
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
   }, []);
 
   // Loading state
@@ -248,7 +287,7 @@ export default function ChatInterface() {
             )}
             {rightPanel === "memory" ? "Chat" : "Memory"}
           </button>
-          <div className="relative">
+          <div className="relative" ref={shareRef}>
             <button
               onClick={() => setShowShareModal(!showShareModal)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition ${
@@ -338,11 +377,6 @@ export default function ChatInterface() {
           </button>
         </div>
       </header>
-
-      {/* Click-away overlay for share modal */}
-      {showShareModal && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowShareModal(false)} />
-      )}
 
       {/* Error toast */}
       {error && (
