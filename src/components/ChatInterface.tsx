@@ -74,7 +74,8 @@ export default function ChatInterface() {
 
   const [config, setConfig] = useState<EstuaryConfig | null>(null);
   const [textInput, setTextInput] = useState("");
-  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copiedField, setCopiedField] = useState<"url" | "hash" | null>(null);
   const [rightPanel, setRightPanel] = useState<"chat" | "memory">("chat");
   const [splitPct, setSplitPct] = useState(50);
   const isDraggingRef = useRef(false);
@@ -185,14 +186,14 @@ export default function ChatInterface() {
     setTextInput("");
   };
 
-  const generateShareLink = useCallback(() => {
-    if (!config) return;
-    const url = new URL(window.location.origin + "/connect");
-    url.hash = encodeConfig(config);
-    const link = url.toString();
-    setShareLink(link);
-    navigator.clipboard.writeText(link).catch(() => {});
-  }, [config]);
+  const shareHash = config ? encodeConfig(config) : "";
+  const shareUrl = config ? `${window.location.origin}/connect#${shareHash}` : "";
+
+  const copyToClipboard = useCallback((text: string, field: "url" | "hash") => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  }, []);
 
   // Loading state
   if (!config) {
@@ -247,20 +248,88 @@ export default function ChatInterface() {
             )}
             {rightPanel === "memory" ? "Chat" : "Memory"}
           </button>
-          <button
-            onClick={generateShareLink}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-accent-light hover:border-accent/50 transition"
-            title="Copy invite link"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
-              <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
-            </svg>
-            Share
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowShareModal(!showShareModal)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition ${
+                showShareModal
+                  ? "border-accent/50 text-accent-light bg-accent/10"
+                  : "border-border text-muted hover:text-accent-light hover:border-accent/50"
+              }`}
+              title="Share"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+                <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+              </svg>
+              Share
+            </button>
+
+            {showShareModal && (
+              <div className="absolute right-0 top-full mt-2 w-96 rounded-xl border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Share Session</p>
+                    <button
+                      onClick={() => setShowShareModal(false)}
+                      className="text-muted hover:text-foreground transition"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-muted leading-relaxed">
+                    Share the URL or hash so others can connect to this character.
+                  </p>
+
+                  {/* URL row */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Full URL</label>
+                    <div className="flex gap-2 items-center">
+                      <div className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-[11px] font-mono text-muted truncate select-all" title={shareUrl}>
+                        {shareUrl}
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(shareUrl, "url")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+                          copiedField === "url"
+                            ? "bg-success/20 text-success border border-success/30"
+                            : "bg-accent text-white hover:bg-accent-light"
+                        }`}
+                      >
+                        {copiedField === "url" ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Hash row */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Session Hash</label>
+                    <div className="flex gap-2 items-center">
+                      <div className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-[11px] font-mono text-muted truncate select-all" title={shareHash}>
+                        {shareHash}
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(shareHash, "hash")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+                          copiedField === "hash"
+                            ? "bg-success/20 text-success border border-success/30"
+                            : "bg-accent text-white hover:bg-accent-light"
+                        }`}
+                      >
+                        {copiedField === "hash" ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           <button
             onClick={handleDisconnect}
             className="px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-danger hover:border-danger/50 transition"
@@ -270,27 +339,9 @@ export default function ChatInterface() {
         </div>
       </header>
 
-      {/* Share link toast */}
-      {shareLink && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
-          <div className="rounded-lg bg-surface border border-border px-4 py-3 shadow-lg backdrop-blur-sm max-w-md">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <p className="text-xs font-medium text-foreground">Invite link copied to clipboard!</p>
-              <button
-                onClick={() => setShareLink(null)}
-                className="text-muted hover:text-foreground text-xs"
-              >
-                Dismiss
-              </button>
-            </div>
-            <p className="text-[10px] text-muted font-mono break-all select-all leading-relaxed">
-              {shareLink}
-            </p>
-            <p className="text-[10px] text-muted mt-2">
-              Anyone with this link can chat with the same character using your credentials.
-            </p>
-          </div>
-        </div>
+      {/* Click-away overlay for share modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowShareModal(false)} />
       )}
 
       {/* Error toast */}
