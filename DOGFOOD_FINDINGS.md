@@ -73,31 +73,32 @@ Findings from building a Next.js 16 demo app using `@estuary-ai/sdk@0.1.20`.
    - You must add `"use client"` to the page using `next/dynamic` with `ssr: false`.
    - Unintuitive for developers new to the App Router.
 
-3. **Memory REST response types use `Record<string, unknown>` everywhere**
+3. **Memory REST response types use `Record<string, unknown>` everywhere** -- **Fixed**
    - `MemoryListResponse.memories` is typed as `Record<string, unknown>[]` instead of `MemoryData[]`.
    - `MemoryGraphResponse.nodes` and `edges` are `Record<string, unknown>[]`.
    - `MemoryStatsResponse` is just `[key: string]: unknown`.
    - This makes the Memory API much harder to use -- developers lose all type safety and must cast.
-   - **Fix needed:** Use proper typed interfaces for all REST API response shapes.
+   - **Fix:** All memory REST response types now use proper typed interfaces: `MemoryData`, `MemoryGraphNode`, `MemoryGraphEdge`, `CoreFact`, and a structured `MemoryStatsResponse`. `MemoryData` expanded to full SDK contract shape (18 fields). Demo app `MemoryPanel.tsx` casts removed.
 
-4. **`VoiceManager.stop()` returns `Promise<void>` but `stopVoice()` on client is synchronous**
+4. **`VoiceManager.stop()` returns `Promise<void>` but `stopVoice()` on client is synchronous** -- **Fixed**
    - The `VoiceManager` interface declares `stop(): Promise<void>` but `EstuaryClient.stopVoice()` calls it synchronously without awaiting.
    - Could cause resource cleanup issues.
+   - **Fix:** `stopVoice()` is now `async` and properly `await`s `VoiceManager.stop()`. `disconnect()` also made async to await `stopVoice()`.
 
-5. **Code duplication: `AudioRecorder` vs `WebSocketVoiceManager`**
+5. **Code duplication: `AudioRecorder` vs `WebSocketVoiceManager`** -- **Fixed**
    - `src/audio/audio-recorder.ts` is never used by the client. `WebSocketVoiceManager` duplicates all its audio capture logic.
    - Dead code that adds confusion for developers reading the source.
-   - **Fix needed:** Remove `AudioRecorder` or extract shared audio utilities.
+   - **Fix:** Deleted `AudioRecorder`. Extracted shared `resample()`, `float32ToInt16()`, `uint8ArrayToBase64()` into `src/audio/audio-utils.ts`. `WebSocketVoiceManager` now imports from the shared module.
 
-6. **Reconnect backoff is linear, not exponential (misleading)**
+6. **Reconnect backoff is linear, not exponential (misleading)** -- **Fixed (docs corrected)**
    - `socket-manager.ts`: `delay * this.reconnectAttempt` gives linear backoff (2s, 4s, 6s...).
-   - Comments and docs describe it as "exponential backoff" which is incorrect.
-   - **Fix needed:** Either implement actual exponential backoff or correct the docs.
+   - Comments and docs described it as "exponential backoff" which is incorrect.
+   - **Fix:** Updated code comment, JSDoc, and all docs (TS SDK core-concepts, configuration reference, Unity SDK core-concepts) to accurately describe linear backoff.
 
-7. **No request timeout in `RestClient`**
+7. **No request timeout in `RestClient`** -- **Fixed**
    - `fetch()` calls in `rest-client.ts` have no `AbortController` timeout.
    - On slow/dead networks, memory API calls will hang indefinitely.
-   - **Fix needed:** Add configurable timeout (default ~10s) using `AbortSignal.timeout()`.
+   - **Fix:** Added `AbortSignal.timeout()` with a configurable default of 10 seconds to all `RestClient` fetch calls.
 
 8. **LiveKit token timeout is hardcoded to 10s**
    - `livekit-voice.ts`: 10 second timeout for LiveKit token request is not configurable.
@@ -183,29 +184,52 @@ Findings from building a Next.js 16 demo app using `@estuary-ai/sdk@0.1.20`.
 
 ## SDK Package Health
 
-- **npm package:** `@estuary-ai/sdk@0.1.20` (latest)
-- **Published:** 2026-02-26
-- **21 versions** published (rapid iteration from 0.1.0 to 0.1.20)
+- **npm package:** `@estuary-ai/sdk@0.1.21` (latest as of 2026-03-10)
+- **Published 0.1.21:** Includes BUG-1 through BUG-5 fixes from initial dogfood
+- **22 versions** published (rapid iteration from 0.1.0 to 0.1.21)
 - **File count:** 14 files in tarball
 - **Dual build:** ESM + CJS with TypeScript declarations
-- **Dependencies:** socket.io-client (should be `dependencies`, is `devDependencies` in published version)
+- **Dependencies:** socket.io-client (correctly in `dependencies` since 0.1.21)
 - **License:** MIT
-- **Types:** Included, autocompletion works well in ESM. CJS types missing in published version.
+- **Types:** Included, autocompletion works in both ESM and CJS (since 0.1.21)
 
 ---
 
-## Files Changed (local, unpublished)
+## Files Changed
 
-### SDK (`estuary-product/estuary-ts-sdk/`)
+### Round 1 — shipped in 0.1.21
+
+#### SDK (`estuary-product/estuary-ts-sdk/`)
 - `package.json` -- socket.io-client moved from devDependencies to dependencies
 - `tsup.config.ts` -- platform: neutral, socket.io-client externalized, CJS dts enabled
 - `src/voice/voice-manager.ts` -- isLiveKitAvailable() check before creating LiveKit manager
 - `src/voice/livekit-voice.ts` -- error messages include underlying reason
 - `README.md` -- added React/Next.js usage section
 
-### Docs (`estuary-product/estuary-docs/`)
+#### Docs (`estuary-product/estuary-docs/`)
 - `sidebars.ts` -- added Unity SDK section
 - `docs/typescript-sdk/getting-started.md` -- added React/Next.js integration section
 - `docs/typescript-sdk/voice-livekit.md` -- added server requirement warnings, error handling section, auto mode pitfall
 - `docs/typescript-sdk/core-concepts.md` -- added missing config options
 - `docs/typescript-sdk/api-reference/_category_.json` -- created (was missing)
+
+### Round 2 — P1 fixes (local, unpublished)
+
+#### SDK (`estuary-product/estuary-ts-sdk/`)
+- `src/types.ts` -- Memory REST response types fully typed (`MemoryData`, `MemoryGraphNode`, `MemoryGraphEdge`, `CoreFact`, `MemoryStatsResponse`); `MemoryData` expanded to full 18-field contract shape; `reconnectDelayMs` JSDoc corrected to linear backoff
+- `src/client.ts` -- `stopVoice()` now async, awaits `VoiceManager.stop()`; `disconnect()` now async, awaits `stopVoice()`
+- `src/rest/rest-client.ts` -- Added `AbortSignal.timeout(10s)` to all fetch calls; timeout configurable via constructor
+- `src/connection/socket-manager.ts` -- Comment corrected from "Exponential-ish" to "Linear backoff"
+- `src/index.ts` -- Exported new types: `MemoryGraphNode`, `MemoryGraphEdge`, `CoreFact`
+- `src/audio/audio-recorder.ts` -- Deleted (dead code)
+- `src/audio/audio-utils.ts` -- New: shared `resample()`, `float32ToInt16()`, `uint8ArrayToBase64()`
+- `src/voice/websocket-voice.ts` -- Imports audio utils from shared module instead of duplicating
+- `tests/client.test.ts` -- Updated disconnect test to await async disconnect
+- `tests/memory-client.test.ts` -- Fixed search test expectation (`query` → `q`)
+
+#### Docs (`estuary-product/estuary-docs/`)
+- `docs/typescript-sdk/core-concepts.md` -- Reconnect description corrected to "linear backoff"
+- `docs/unity-sdk/core-concepts.md` -- Reconnect description corrected to "linear backoff"
+
+#### Demo (`estuary-ts-sdk-demo/`)
+- `src/components/MemoryPanel.tsx` -- Removed `as unknown as` type casts; `coreFacts` state changed from `MemoryData[]` to `CoreFact[]`; dedicated core facts renderer using `factKey`/`factValue`

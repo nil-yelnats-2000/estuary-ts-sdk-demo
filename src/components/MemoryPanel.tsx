@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { EstuaryClient, MemoryData } from "@estuary-ai/sdk";
+import type { EstuaryClient, MemoryData, CoreFact } from "@estuary-ai/sdk";
 
 type MemoryType = string;
 
@@ -46,7 +46,7 @@ interface MemoryPanelProps {
 
 export default function MemoryPanel({ getClient }: MemoryPanelProps) {
   const [memories, setMemories] = useState<MemoryData[]>([]);
-  const [coreFacts, setCoreFacts] = useState<MemoryData[]>([]);
+  const [coreFacts, setCoreFacts] = useState<CoreFact[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,8 +65,8 @@ export default function MemoryPanel({ getClient }: MemoryPanelProps) {
         client.memory.getMemories({ status: "active", limit: 100, sortBy: "created_at", sortOrder: "desc" }),
         client.memory.getCoreFacts(),
       ]);
-      setMemories(memRes.memories as unknown as MemoryData[]);
-      setCoreFacts(factsRes.coreFacts as unknown as MemoryData[]);
+      setMemories(memRes.memories);
+      setCoreFacts(factsRes.coreFacts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load memories");
     } finally {
@@ -98,7 +98,7 @@ export default function MemoryPanel({ getClient }: MemoryPanelProps) {
     setSearching(true);
     try {
       const res = await client.memory.search(searchQuery.trim(), 20);
-      setSearchResults(res.results as unknown as { memory: MemoryData; score: number }[]);
+      setSearchResults(res.results);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
     } finally {
@@ -313,7 +313,24 @@ export default function MemoryPanel({ getClient }: MemoryPanelProps) {
                 No core facts extracted yet.
               </p>
             )}
-            {coreFacts.map((m) => renderMemoryCard(m))}
+            {coreFacts.map((fact) => (
+              <div
+                key={fact.id}
+                className="rounded-lg border border-border bg-surface p-3 space-y-1 animate-fade-in-up"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium border bg-indigo-500/20 text-indigo-400 border-indigo-500/30">
+                    {fact.factKey}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed">{fact.factValue}</p>
+                {fact.createdAt && (
+                  <p className="text-[10px] text-muted">
+                    {new Date(fact.createdAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

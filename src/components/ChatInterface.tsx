@@ -548,7 +548,7 @@ export default function ChatInterface() {
                     </div>
                   ))}
 
-                  {isBotSpeaking &&
+                  {isVoiceActive && isBotSpeaking &&
                     !messages.some((m) => m.role === "bot" && !m.isFinal) && (
                       <div className="flex justify-start">
                         <div className="bg-surface-light border border-border rounded-2xl rounded-bl-md">

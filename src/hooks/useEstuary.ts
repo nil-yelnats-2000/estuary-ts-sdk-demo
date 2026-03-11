@@ -113,12 +113,22 @@ export function useEstuary() {
           );
           if (existing >= 0) {
             const updated = [...prev];
+            // For streaming: accumulate text from non-final chunks, replace on final
+            const newText = response.isFinal
+              ? response.text
+              : response.tokenStream
+                ? updated[existing].text + response.text
+                : updated[existing].text + response.text;
             updated[existing] = {
               ...updated[existing],
-              text: response.text,
+              text: newText,
               isFinal: response.isFinal,
             };
             return updated;
+          }
+          // Skip creating a bubble for empty first chunks
+          if (!response.text && !response.isFinal) {
+            return prev;
           }
           return [
             ...prev,
@@ -136,16 +146,23 @@ export function useEstuary() {
       client.on("sttResponse", (response: SttResponse) => {
         if (response.isFinal) {
           if (response.text.trim()) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `user-${Date.now()}`,
-                role: "user",
-                text: response.text,
-                timestamp: Date.now(),
-                isFinal: true,
-              },
-            ]);
+            setMessages((prev) => {
+              // Deduplicate: don't add if the last user message has the same text
+              const lastUserMsg = [...prev].reverse().find((m) => m.role === "user");
+              if (lastUserMsg && lastUserMsg.text === response.text) {
+                return prev;
+              }
+              return [
+                ...prev,
+                {
+                  id: `user-${Date.now()}`,
+                  role: "user",
+                  text: response.text,
+                  timestamp: Date.now(),
+                  isFinal: true,
+                },
+              ];
+            });
           }
           setSttText("");
         } else {
@@ -218,10 +235,11 @@ export function useEstuary() {
     }
   }, []);
 
-  const stopVoice = useCallback(() => {
-    clientRef.current?.stopVoice();
+  const stopVoice = useCallback(async () => {
+    await clientRef.current?.stopVoice();
     setIsVoiceActive(false);
     setIsMuted(false);
+    setIsBotSpeaking(false);
     setSttText("");
   }, []);
 
