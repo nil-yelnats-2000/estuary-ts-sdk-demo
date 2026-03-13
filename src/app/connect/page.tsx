@@ -3,7 +3,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { decrypt, isEncryptedPayload, isLegacyPayload } from "@/lib/crypto";
+import { decryptPayload, detectPayloadType, type PayloadType } from "@/lib/crypto";
 
 const DEFAULT_SERVER_URL = "https://api.estuary-ai.com";
 
@@ -28,9 +28,8 @@ function decodeLegacyConfig(hash: string): ConnectConfig | null {
   }
 }
 
-async function decryptConfig(hash: string, passphrase: string): Promise<ConnectConfig> {
-  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
-  const plaintext = await decrypt(raw, passphrase);
+async function decryptConfig(hash: string, passphrase?: string): Promise<ConnectConfig> {
+  const plaintext = await decryptPayload(hash, passphrase);
   const parsed = JSON.parse(plaintext);
   if (!parsed.serverUrl || !parsed.apiKey || !parsed.characterId || !parsed.playerId) {
     throw new Error("Invalid config");
@@ -52,6 +51,7 @@ export default function ConnectPage() {
 
   // Encrypted link state
   const [encryptedHash, setEncryptedHash] = useState<string | null>(null);
+  const [hashPayloadType, setHashPayloadType] = useState<PayloadType>("unknown");
   const [passphrase, setPassphrase] = useState("");
   const [passphraseError, setPassphraseError] = useState<string | null>(null);
   const [isDecrypting, setIsDecrypting] = useState(false);
@@ -59,13 +59,28 @@ export default function ConnectPage() {
   // Restore saved config or detect shared link type
   useEffect(() => {
     const hash = window.location.hash;
-    if (isEncryptedPayload(hash)) {
-      // Encrypted link — needs passphrase
-      setEncryptedHash(hash);
+    const type = detectPayloadType(hash);
+
+    if (type === "auto") {
+      // v0: auto-key, decrypt immediately (no passphrase needed)
+      decryptConfig(hash)
+        .then((decrypted) => {
+          setConfig(decrypted);
+          setIsFromLink(true);
+        })
+        .catch(() => {
+          setEncryptedHash(hash);
+          setHashPayloadType(type);
+        });
       return;
     }
-    if (isLegacyPayload(hash)) {
-      // Legacy base64 link — still support for backwards compat
+    if (type === "passphrase") {
+      // v1: needs passphrase
+      setEncryptedHash(hash);
+      setHashPayloadType(type);
+      return;
+    }
+    if (type === "legacy") {
       const shared = decodeLegacyConfig(hash);
       if (shared) {
         setConfig(shared);
@@ -148,10 +163,12 @@ export default function ConnectPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {encryptedHash ? "Encrypted Session Link" : "Connect to Estuary"}
+              {encryptedHash && hashPayloadType === "passphrase"
+                ? "Encrypted Session Link"
+                : "Connect to Estuary"}
             </h1>
             <p className="text-sm text-muted mt-1">
-              {encryptedHash
+              {encryptedHash && hashPayloadType === "passphrase"
                 ? "Enter the passphrase to unlock this shared session"
                 : isFromLink
                   ? "Joining shared session..."
@@ -159,8 +176,8 @@ export default function ConnectPage() {
             </p>
           </div>
 
-          {/* Passphrase prompt for encrypted links */}
-          {encryptedHash && (
+          {/* Passphrase prompt for v1 encrypted links */}
+          {encryptedHash && hashPayloadType === "passphrase" && (
             <form onSubmit={handleDecryptLink} className="space-y-4 mb-6">
               <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
                 <div className="flex items-start gap-2 p-2.5 rounded-lg bg-accent/10 border border-accent/20">
@@ -274,7 +291,7 @@ export default function ConnectPage() {
           <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
             <label className="block text-xs font-medium text-muted">Session Hash</label>
             <p className="text-[11px] text-muted leading-relaxed">
-              Paste an encrypted session hash and enter the passphrase to connect.
+              Paste an encrypted session hash to connect.
             </p>
             <input
               type="text"
@@ -284,9 +301,9 @@ export default function ConnectPage() {
                 setHashError(null);
               }}
               className="w-full px-3 py-2 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono"
-              placeholder="Paste encrypted session hash here..."
+              placeholder="Paste session hash here..."
             />
-            {isEncryptedPayload(hashInput.trim()) && (
+            {detectPayloadType(hashInput.trim()) === "passphrase" && (
               <div>
                 <label className="block text-xs font-medium text-muted mb-1.5">Passphrase</label>
                 <input
@@ -309,24 +326,31 @@ export default function ConnectPage() {
               disabled={!hashInput.trim() || isDecrypting}
               onClick={async () => {
                 const trimmed = hashInput.trim();
-                if (isEncryptedPayload(trimmed)) {
-                  if (!passphrase.trim()) {
-                    setHashError("Passphrase is required for encrypted hashes.");
+                const type = detectPayloadType(trimmed);
+                if (type === "auto" || type === "passphrase") {
+                  if (type === "passphrase" && !passphrase.trim()) {
+                    setHashError("Passphrase is required for this hash.");
                     return;
                   }
                   setIsDecrypting(true);
                   setHashError(null);
                   try {
-                    const parsed = await decryptConfig(trimmed, passphrase.trim());
+                    const parsed = await decryptConfig(
+                      trimmed,
+                      type === "passphrase" ? passphrase.trim() : undefined,
+                    );
                     sessionStorage.setItem("estuary-config", JSON.stringify(parsed));
                     router.push("/chat");
                   } catch {
-                    setHashError("Wrong passphrase or invalid hash.");
+                    setHashError(
+                      type === "passphrase"
+                        ? "Wrong passphrase or invalid hash."
+                        : "Invalid or corrupted hash.",
+                    );
                   } finally {
                     setIsDecrypting(false);
                   }
-                } else {
-                  // Legacy base64 fallback
+                } else if (type === "legacy") {
                   const parsed = decodeLegacyConfig(trimmed);
                   if (parsed) {
                     sessionStorage.setItem("estuary-config", JSON.stringify(parsed));
@@ -334,6 +358,8 @@ export default function ConnectPage() {
                   } else {
                     setHashError("Invalid hash. Make sure you copied the full session hash.");
                   }
+                } else {
+                  setHashError("Unrecognized hash format.");
                 }
               }}
               className="w-full py-2.5 rounded-xl border border-accent/50 text-accent-light text-sm font-medium hover:bg-accent/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
