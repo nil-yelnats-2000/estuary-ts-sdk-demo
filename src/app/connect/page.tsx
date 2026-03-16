@@ -61,19 +61,6 @@ export default function ConnectPage() {
     const hash = window.location.hash;
     const type = detectPayloadType(hash);
 
-    if (type === "auto") {
-      // v0: auto-key, decrypt immediately (no passphrase needed)
-      decryptConfig(hash)
-        .then((decrypted) => {
-          setConfig(decrypted);
-          setIsFromLink(true);
-        })
-        .catch(() => {
-          setEncryptedHash(hash);
-          setHashPayloadType(type);
-        });
-      return;
-    }
     if (type === "passphrase") {
       // v1: needs passphrase
       setEncryptedHash(hash);
@@ -327,26 +314,19 @@ export default function ConnectPage() {
               onClick={async () => {
                 const trimmed = hashInput.trim();
                 const type = detectPayloadType(trimmed);
-                if (type === "auto" || type === "passphrase") {
-                  if (type === "passphrase" && !passphrase.trim()) {
+                if (type === "passphrase") {
+                  if (!passphrase.trim()) {
                     setHashError("Passphrase is required for this hash.");
                     return;
                   }
                   setIsDecrypting(true);
                   setHashError(null);
                   try {
-                    const parsed = await decryptConfig(
-                      trimmed,
-                      type === "passphrase" ? passphrase.trim() : undefined,
-                    );
+                    const parsed = await decryptConfig(trimmed, passphrase.trim());
                     sessionStorage.setItem("estuary-config", JSON.stringify(parsed));
                     router.push("/chat");
                   } catch {
-                    setHashError(
-                      type === "passphrase"
-                        ? "Wrong passphrase or invalid hash."
-                        : "Invalid or corrupted hash.",
-                    );
+                    setHashError("Wrong passphrase or invalid hash.");
                   } finally {
                     setIsDecrypting(false);
                   }

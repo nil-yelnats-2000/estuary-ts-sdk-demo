@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo, type FormEvent } fro
 import { useRouter } from "next/navigation";
 import { ConnectionState } from "@estuary-ai/sdk";
 import { useEstuary, type EstuaryConfig, type EstuarySettings, DEFAULT_SETTINGS } from "@/hooks/useEstuary";
-import { encryptAutoKey, encryptWithPassphrase } from "@/lib/crypto";
+import { encryptWithPassphrase } from "@/lib/crypto";
 import CharacterAvatar, { type CharacterState } from "./CharacterAvatar";
 import MemoryPanel from "./MemoryPanel";
 import SettingsDrawer from "./SettingsDrawer";
@@ -80,7 +80,6 @@ export default function ChatInterface() {
   const [shareUrl, setShareUrl] = useState("");
   const [isEncrypting, setIsEncrypting] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
-  const [usePassphrase, setUsePassphrase] = useState(false);
   const [sharePassphrase, setSharePassphrase] = useState("");
   const [rightPanel, setRightPanel] = useState<"chat" | "memory">("chat");
   const [splitPct, setSplitPct] = useState(50);
@@ -215,15 +214,12 @@ export default function ChatInterface() {
   };
 
   const generateShareLink = useCallback(async () => {
-    if (!config) return;
-    if (usePassphrase && !sharePassphrase.trim()) return;
+    if (!config || !sharePassphrase.trim()) return;
     setIsEncrypting(true);
     setShareError(null);
     try {
       const plaintext = JSON.stringify(config);
-      const hash = usePassphrase
-        ? await encryptWithPassphrase(plaintext, sharePassphrase.trim())
-        : await encryptAutoKey(plaintext);
+      const hash = await encryptWithPassphrase(plaintext, sharePassphrase.trim());
       setShareHash(hash);
       setShareUrl(`${window.location.origin}/connect#${hash}`);
     } catch {
@@ -231,7 +227,7 @@ export default function ChatInterface() {
     } finally {
       setIsEncrypting(false);
     }
-  }, [config, usePassphrase, sharePassphrase]);
+  }, [config, sharePassphrase]);
 
   const copyToClipboard = useCallback((text: string, field: "url" | "hash") => {
     if (navigator.clipboard?.writeText) {
@@ -376,49 +372,31 @@ export default function ChatInterface() {
             </div>
 
             <p className="text-[11px] text-muted leading-relaxed">
-              Your session config is encrypted with AES-256-GCM before sharing.
+              Your session config is encrypted with AES-256-GCM and a passphrase before sharing.
             </p>
 
-            {/* Passphrase toggle */}
-            <label className="flex items-center gap-2 cursor-pointer">
+            {/* Passphrase input */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Passphrase</label>
               <input
-                type="checkbox"
-                checked={usePassphrase}
+                type="password"
+                value={sharePassphrase}
                 onChange={(e) => {
-                  setUsePassphrase(e.target.checked);
+                  setSharePassphrase(e.target.value);
                   setShareHash("");
                   setShareUrl("");
                   setShareError(null);
                 }}
-                className="w-3.5 h-3.5 rounded border-border accent-accent"
+                className="w-full px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-xs font-mono focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+                placeholder="Enter a passphrase..."
               />
-              <span className="text-[11px] text-muted">Require passphrase for extra security</span>
-            </label>
-
-            {/* Passphrase input (only when toggled on) */}
-            {usePassphrase && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted uppercase tracking-wider">Passphrase</label>
-                <input
-                  type="password"
-                  value={sharePassphrase}
-                  onChange={(e) => {
-                    setSharePassphrase(e.target.value);
-                    setShareHash("");
-                    setShareUrl("");
-                    setShareError(null);
-                  }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-surface-light border border-border text-xs font-mono focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
-                  placeholder="Enter a passphrase..."
-                />
-              </div>
-            )}
+            </div>
 
             {/* Generate button */}
             {!shareUrl && (
               <button
                 onClick={generateShareLink}
-                disabled={isEncrypting || (usePassphrase && !sharePassphrase.trim())}
+                disabled={isEncrypting || !sharePassphrase.trim()}
                 className="w-full py-2 rounded-lg text-xs font-medium transition bg-accent text-white hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isEncrypting ? "Encrypting..." : "Generate Encrypted Link"}
@@ -470,7 +448,7 @@ export default function ChatInterface() {
               </div>
             )}
 
-            {shareUrl && usePassphrase && (
+            {shareUrl && (
               <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 shrink-0 mt-0.5">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
