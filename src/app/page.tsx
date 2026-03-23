@@ -16,27 +16,6 @@ export default function LandingPage() {
         <div className="absolute -bottom-20 left-1/3 w-[600px] h-[400px] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
       </div>
 
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            </svg>
-          </div>
-          <span className="text-lg font-bold tracking-tight">Estuary</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/connect"
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-surface-light border border-border text-foreground hover:border-accent/50 hover:text-accent-light transition"
-          >
-            Connect
-          </Link>
-        </div>
-      </nav>
-
       {/* Hero */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-12">
         <div className="max-w-4xl w-full flex flex-col items-center text-center">
@@ -51,7 +30,7 @@ export default function LandingPage() {
           {/* Sub */}
           <p className="text-lg text-muted max-w-xl mb-10 animate-fade-in-up" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
             Real-time voice and text conversations with persistent memory.
-            Built with the Estuary TypeScript SDK.
+            Built with the Estuary Web SDK.
           </p>
 
           {/* CTA */}
