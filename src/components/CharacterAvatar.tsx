@@ -101,8 +101,8 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     // --- Body ---
     // Shoulders / torso
     const bodyGrad = ctx.createLinearGradient(0, 120, 0, 220);
-    bodyGrad.addColorStop(0, "#6366f1");
-    bodyGrad.addColorStop(1, "#4338ca");
+    bodyGrad.addColorStop(0, "#5aadcf");
+    bodyGrad.addColorStop(1, "#3d8aaa");
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
     ctx.moveTo(-70, 120);
@@ -112,13 +112,13 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     ctx.fill();
 
     // Collar / neck area
-    ctx.fillStyle = "#818cf8";
+    ctx.fillStyle = "#74c0dc";
     ctx.beginPath();
     ctx.ellipse(0, 125, 38, 18, 0, 0, Math.PI);
     ctx.fill();
 
     // --- Head shadow ---
-    ctx.fillStyle = "rgba(67, 56, 202, 0.12)";
+    ctx.fillStyle = "rgba(61, 138, 170, 0.12)";
     ctx.beginPath();
     ctx.ellipse(3, 10, 118, 115, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -153,8 +153,8 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
 
     // --- Hair ---
     const hairGrad = ctx.createLinearGradient(0, -headR - 20, 0, -headR + 60);
-    hairGrad.addColorStop(0, "#312e81");
-    hairGrad.addColorStop(1, "#4338ca");
+    hairGrad.addColorStop(0, "#1a3050");
+    hairGrad.addColorStop(1, "#3d8aaa");
     ctx.fillStyle = hairGrad;
 
     // Main hair top
@@ -163,7 +163,7 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     ctx.fill();
 
     // Side hair
-    ctx.fillStyle = "#3730a3";
+    ctx.fillStyle = "#2d5a7a";
     ctx.beginPath();
     ctx.ellipse(-headR + 8, -5, 26, 58, 0.2, 0, Math.PI * 2);
     ctx.fill();
@@ -172,7 +172,7 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     ctx.fill();
 
     // Bangs
-    ctx.fillStyle = "#4338ca";
+    ctx.fillStyle = "#3d8aaa";
     ctx.beginPath();
     ctx.ellipse(-28, -headR + 24, 38, 22, -0.1, 0, Math.PI * 2);
     ctx.fill();
@@ -180,13 +180,13 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     ctx.ellipse(22, -headR + 20, 42, 24, 0.15, 0, Math.PI * 2);
     ctx.fill();
     // Central bang highlight
-    ctx.fillStyle = "#4f46e5";
+    ctx.fillStyle = "#4a90b0";
     ctx.beginPath();
     ctx.ellipse(-5, -headR + 18, 25, 15, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Hair shine
-    ctx.fillStyle = "rgba(165, 160, 255, 0.15)";
+    ctx.fillStyle = "rgba(116, 192, 220, 0.15)";
     ctx.beginPath();
     ctx.ellipse(-30, -headR + 5, 35, 12, -0.3, 0, Math.PI * 2);
     ctx.fill();
@@ -235,17 +235,17 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
           ex + pupilOfsX, eyeY + pupilOfsY, 1,
           ex + pupilOfsX, eyeY + pupilOfsY, 13
         );
-        irisGrad.addColorStop(0, "#818cf8");
-        irisGrad.addColorStop(0.4, "#6366f1");
-        irisGrad.addColorStop(0.8, "#4338ca");
-        irisGrad.addColorStop(1, "#312e81");
+        irisGrad.addColorStop(0, "#74c0dc");
+        irisGrad.addColorStop(0.4, "#5aadcf");
+        irisGrad.addColorStop(0.8, "#3d8aaa");
+        irisGrad.addColorStop(1, "#1a3050");
         ctx.fillStyle = irisGrad;
         ctx.beginPath();
         ctx.ellipse(ex + pupilOfsX, eyeY + pupilOfsY, 12, Math.min(12, eH * 0.7), 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Pupil
-        ctx.fillStyle = "#1e1b4b";
+        ctx.fillStyle = "#0e2030";
         ctx.beginPath();
         ctx.ellipse(ex + pupilOfsX, eyeY + pupilOfsY, 5.5, Math.min(5.5, eH * 0.3), 0, 0, Math.PI * 2);
         ctx.fill();
@@ -279,7 +279,7 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     }
 
     // --- Eyebrows ---
-    ctx.strokeStyle = "#4338ca";
+    ctx.strokeStyle = "#3d8aaa";
     ctx.lineWidth = 3.5;
     ctx.lineCap = "round";
     for (const side of [-1, 1]) {
@@ -381,20 +381,20 @@ export default function CharacterAvatar({ state, className = "" }: CharacterAvat
     // --- State indicator glow ---
     if (state === "listening") {
       const glowAlpha = 0.06 + Math.sin(t * 3) * 0.03;
-      ctx.fillStyle = `rgba(99, 102, 241, ${glowAlpha})`;
+      ctx.fillStyle = `rgba(90, 173, 207, ${glowAlpha})`;
       ctx.beginPath();
       ctx.ellipse(0, 0, headR + 25, headR + 25, 0, 0, Math.PI * 2);
       ctx.fill();
     } else if (state === "speaking") {
       const glowAlpha = 0.05 + Math.sin(t * 4) * 0.03;
-      ctx.fillStyle = `rgba(139, 92, 246, ${glowAlpha})`;
+      ctx.fillStyle = `rgba(144, 128, 168, ${glowAlpha})`;
       ctx.beginPath();
       ctx.ellipse(0, 0, headR + 20, headR + 20, 0, 0, Math.PI * 2);
       ctx.fill();
     } else if (state === "thinking") {
       // Thinking dots
       const dotAlpha = 0.4 + Math.sin(t * 2.5) * 0.3;
-      ctx.fillStyle = `rgba(99, 102, 241, ${dotAlpha})`;
+      ctx.fillStyle = `rgba(90, 173, 207, ${dotAlpha})`;
       for (let i = 0; i < 3; i++) {
         const dotPhase = t * 2 + i * 0.4;
         const dotY = -headR - 25 - Math.sin(dotPhase) * 8;

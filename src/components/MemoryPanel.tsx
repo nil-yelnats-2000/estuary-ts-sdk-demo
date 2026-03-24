@@ -12,7 +12,7 @@ const MEMORY_TYPE_COLORS: Record<string, string> = {
   event: "bg-amber-500/20 text-amber-400 border-amber-500/30",
   emotional_state: "bg-rose-500/20 text-rose-400 border-rose-500/30",
   correction: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  character_self: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+  character_self: "bg-accent/20 text-accent-light border-accent/30",
   spatial_change: "bg-teal-500/20 text-teal-400 border-teal-500/30",
 };
 
@@ -319,7 +319,7 @@ export default function MemoryPanel({ getClient }: MemoryPanelProps) {
                 className="rounded-lg border border-border bg-surface p-3 space-y-1 animate-fade-in-up"
               >
                 <div className="flex items-center gap-2">
-                  <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium border bg-indigo-500/20 text-indigo-400 border-indigo-500/30">
+                  <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium border bg-accent/20 text-accent-light border-accent/30">
                     {fact.factKey}
                   </span>
                 </div>

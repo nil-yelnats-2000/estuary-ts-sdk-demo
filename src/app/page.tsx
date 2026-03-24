@@ -164,12 +164,8 @@ export default function ConnectPage() {
   if (isExchangingShare) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
-        </div>
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 animate-pulse">
+          <div className="w-12 h-12 rounded bg-accent flex items-center justify-center animate-pulse">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -185,18 +181,12 @@ export default function ConnectPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
-      </div>
-
       {/* Form */}
-      <div className="relative z-10 flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/estuary-logo.png" alt="Estuary" className="w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-indigo-500/20 mx-auto" />
+            <img src="/estuary-logo.png" alt="Estuary" className="w-16 h-16 rounded mb-4 mx-auto" />
             <h1 className="text-2xl font-bold tracking-tight">
               {encryptedHash && hashPayloadType === "passphrase"
                 ? "Encrypted Session Link"
@@ -214,7 +204,7 @@ export default function ConnectPage() {
           {/* Passphrase prompt for v1 encrypted links */}
           {encryptedHash && hashPayloadType === "passphrase" && (
             <form onSubmit={handleDecryptLink} className="space-y-4 mb-6">
-              <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
+              <div className="rounded border border-border bg-surface p-5 space-y-4">
                 <div className="flex items-start gap-2 p-2.5 rounded-lg bg-accent/10 border border-accent/20">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-light shrink-0 mt-0.5">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -249,7 +239,7 @@ export default function ConnectPage() {
               <button
                 type="submit"
                 disabled={!passphrase.trim() || isDecrypting}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-medium text-sm hover:from-indigo-600 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded bg-accent text-white font-medium text-sm hover:bg-accent-light transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDecrypting ? "Decrypting..." : "Unlock & Connect"}
               </button>
@@ -263,7 +253,7 @@ export default function ConnectPage() {
           )}
 
           <form onSubmit={handleConnect} className="space-y-4" autoComplete="off">
-            <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
+            <div className="rounded border border-border bg-surface p-5 space-y-4">
               {IS_DEV && (
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">Server URL</label>
@@ -337,7 +327,7 @@ export default function ConnectPage() {
 
             <button
               type="submit"
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-medium text-sm hover:from-indigo-600 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/20"
+              className="w-full py-2.5 rounded bg-accent text-white font-medium text-sm hover:bg-accent-light transition-all"
             >
               Connect
             </button>
@@ -351,7 +341,7 @@ export default function ConnectPage() {
           </div>
 
           {/* Hash import */}
-          <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+          <div className="rounded border border-border bg-surface p-5 space-y-3">
             <label className="block text-xs font-medium text-muted">Session Hash</label>
             <p className="text-[11px] text-muted leading-relaxed">
               Paste an encrypted session hash to connect.
@@ -421,7 +411,7 @@ export default function ConnectPage() {
                   setHashError("Unrecognized hash format.");
                 }
               }}
-              className="w-full py-2.5 rounded-xl border border-accent/50 text-accent-light text-sm font-medium hover:bg-accent/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 rounded border border-accent/50 text-accent-light text-sm font-medium hover:bg-accent/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDecrypting ? "Decrypting..." : "Join Session"}
             </button>

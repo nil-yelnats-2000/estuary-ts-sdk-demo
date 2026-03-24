@@ -332,7 +332,7 @@ export default function ChatInterface() {
   return (
     <div className="h-[100dvh] flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface/50 backdrop-blur-sm flex-shrink-0">
+      <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface flex-shrink-0">
         <div className="flex items-center gap-3">
           {characterInfo?.avatar ? (
             <img
@@ -341,7 +341,7 @@ export default function ChatInterface() {
               className="w-8 h-8 rounded-lg object-cover"
             />
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-sm font-semibold">
+            <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-white text-sm font-semibold">
               {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
             </div>
           )}
@@ -365,7 +365,7 @@ export default function ChatInterface() {
             </button>
 
             {showOverflow && (
-              <div className="absolute right-0 top-12 w-48 rounded-xl border border-border bg-surface shadow-xl z-50 py-1">
+              <div className="absolute right-0 top-12 w-48 rounded border border-border bg-surface shadow-xl z-50 py-1">
                 <button onClick={() => { setRightPanel(p => p === "memory" ? "chat" : "memory"); setShowOverflow(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
                   {rightPanel === "memory" ? "Chat" : "Memory Map"}
@@ -460,7 +460,7 @@ export default function ChatInterface() {
 
       {/* Share modal - rendered fixed so it's never clipped */}
       {showShareModal && (
-        <div ref={shareRef} className="fixed top-14 left-2 right-2 md:left-auto md:right-4 md:w-96 rounded-xl border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
+        <div ref={shareRef} className="fixed top-14 left-2 right-2 md:left-auto md:right-4 md:w-96 rounded border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Share Session</p>
@@ -552,13 +552,13 @@ export default function ChatInterface() {
             )}
 
             {shareUrl && (
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 shrink-0 mt-0.5">
+              <div className="flex items-start gap-2 p-2.5 rounded bg-warning/10 border border-warning/20">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-warning shrink-0 mt-0.5">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                   <line x1="12" x2="12" y1="9" y2="13" />
                   <line x1="12" x2="12.01" y1="17" y2="17" />
                 </svg>
-                <p className="text-[11px] text-amber-300 leading-relaxed">
+                <p className="text-[11px] text-warning leading-relaxed">
                   Share the passphrase through a different channel than the link.
                 </p>
               </div>
@@ -570,7 +570,7 @@ export default function ChatInterface() {
       {/* Error toast */}
       {error && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
-          <div className="rounded-lg bg-danger/10 border border-danger/20 px-4 py-2 text-sm text-danger backdrop-blur-sm">
+          <div className="rounded bg-danger/10 border border-danger/20 px-4 py-2 text-sm text-danger">
             {error}
           </div>
         </div>
@@ -580,13 +580,9 @@ export default function ChatInterface() {
       <div ref={splitContainerRef} className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left panel: Character */}
         <div
-          className="flex-shrink-0 flex flex-col items-center justify-center bg-gradient-to-b from-surface to-background relative h-[33vh] md:h-auto"
+          className="flex-shrink-0 flex flex-col items-center justify-center bg-background relative h-[33vh] md:h-auto"
           style={isMobile ? undefined : { width: `${splitPct}%` }}
         >
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-indigo-600/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-violet-600/5 rounded-full blur-3xl" />
-          </div>
 
           {/* Character 3D model / profile */}
           <div className="absolute inset-0">
@@ -605,10 +601,10 @@ export default function ChatInterface() {
         <div
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
-          className="hidden md:block w-1.5 flex-shrink-0 cursor-col-resize relative group"
+          className="hidden md:block w-px flex-shrink-0 cursor-col-resize relative group"
         >
-          <div className="absolute inset-0 bg-border group-hover:bg-accent/50 transition-colors" />
-          <div className="absolute inset-y-0 -left-1 -right-1" />
+          <div className="absolute inset-0 bg-border/60 group-hover:bg-accent/40 transition-colors" />
+          <div className="absolute inset-y-0 -left-2 -right-2" />
         </div>
 
         {/* Right panel: Chat or Memory */}
@@ -658,7 +654,7 @@ export default function ChatInterface() {
                 </div>
               </div>
 
-              <div className="flex-shrink-0 bg-surface/50 backdrop-blur-sm px-4 py-3 border-t border-border">
+              <div className="flex-shrink-0 bg-surface px-4 py-3 border-t border-border">
                 {/* STT live transcription banner */}
                 {isVoiceActive && sttText && (
                   <p className="text-xs text-accent-light italic truncate mb-2 px-1">
@@ -708,9 +704,9 @@ export default function ChatInterface() {
                                 disabled={isSuppressed}
                                 className={`rounded-full h-11 w-11 md:h-8 md:w-8 p-0 flex items-center justify-center transition-all ${
                                   isSuppressed
-                                    ? "bg-violet-600/20 text-violet-400 cursor-not-allowed opacity-75"
+                                    ? "bg-[#9080a8]/20 text-[#9080a8] cursor-not-allowed opacity-75"
                                     : showMuted
-                                      ? "bg-amber-600/20 text-amber-400"
+                                      ? "bg-warning/20 text-warning"
                                       : "bg-surface text-foreground hover:bg-surface-light"
                                 }`}
                                 title={isSuppressed ? "Auto-muted during playback" : isMuted ? "Unmute" : "Mute"}

@@ -24,12 +24,12 @@ export default function VoiceOrb({
 
   const orbSize = isBotSpeaking ? "w-32 h-32" : isVoiceActive ? "w-28 h-28" : "w-24 h-24";
 
-  const getGradient = () => {
-    if (!isConnected) return "from-zinc-700 to-zinc-800";
-    if (isBotSpeaking) return "from-violet-500 via-fuchsia-500 to-pink-500";
-    if (isVoiceActive && !isMuted) return "from-indigo-500 via-blue-500 to-cyan-500";
-    if (isMuted) return "from-amber-600 to-orange-600";
-    return "from-indigo-600 to-violet-600";
+  const getColor = () => {
+    if (!isConnected) return "bg-zinc-700";
+    if (isBotSpeaking) return "bg-[#9080a8]";
+    if (isVoiceActive && !isMuted) return "bg-[#5aadcf]";
+    if (isMuted) return "bg-[#d4a04a]";
+    return "bg-[#5aadcf]";
   };
 
   const getLabel = () => {
@@ -49,11 +49,11 @@ export default function VoiceOrb({
         {(isBotSpeaking || (isVoiceActive && sttText)) && (
           <>
             <div
-              className={`absolute rounded-full bg-gradient-to-r ${getGradient()} opacity-20 animate-pulse-ring`}
+              className={`absolute rounded-full ${getColor()} opacity-20 animate-pulse-ring`}
               style={{ width: "160%", height: "160%" }}
             />
             <div
-              className={`absolute rounded-full bg-gradient-to-r ${getGradient()} opacity-10 animate-pulse-ring`}
+              className={`absolute rounded-full ${getColor()} opacity-10 animate-pulse-ring`}
               style={{
                 width: "200%",
                 height: "200%",
@@ -66,15 +66,14 @@ export default function VoiceOrb({
         {/* Spinning ring for connecting */}
         {isConnecting && (
           <div
-            className="absolute w-36 h-36 rounded-full border-2 border-transparent border-t-indigo-500 animate-spin-slow"
+            className="absolute w-36 h-36 rounded-full border-2 border-transparent border-t-[#5aadcf] animate-spin-slow"
           />
         )}
 
         {/* Main orb */}
         <div
           className={`
-            ${orbSize} rounded-full bg-gradient-to-br ${getGradient()}
-            shadow-lg shadow-indigo-500/20
+            ${orbSize} rounded-full ${getColor()}
             transition-all duration-500 ease-out
             ${isBotSpeaking ? "animate-breathe" : ""}
             ${isConnecting ? "animate-pulse" : ""}
@@ -82,16 +81,13 @@ export default function VoiceOrb({
           style={{
             boxShadow: isConnected
               ? isBotSpeaking
-                ? "0 0 60px rgba(167, 139, 250, 0.4)"
+                ? "0 0 60px rgba(144, 128, 168, 0.4)"
                 : isVoiceActive
-                ? "0 0 40px rgba(99, 102, 241, 0.3)"
-                : "0 0 20px rgba(99, 102, 241, 0.2)"
+                ? "0 0 40px rgba(90, 173, 207, 0.3)"
+                : "0 0 20px rgba(90, 173, 207, 0.2)"
               : "none",
           }}
-        >
-          {/* Inner shine */}
-          <div className="w-full h-full rounded-full bg-gradient-to-t from-transparent to-white/10" />
-        </div>
+        />
       </div>
 
       {/* Status label */}

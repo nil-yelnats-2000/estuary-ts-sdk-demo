@@ -10,8 +10,8 @@
 
 .character-viewer--speaking {
   filter:
-    drop-shadow(0 0 16px rgba(0, 240, 255, 0.22))
-    drop-shadow(0 0 36px rgba(0, 240, 255, 0.12));
+    drop-shadow(0 0 16px rgba(90, 173, 207, 0.22))
+    drop-shadow(0 0 36px rgba(90, 173, 207, 0.12));
 }
 
 /* Glow aura behind the model */
@@ -21,7 +21,7 @@
   inset: 12% 16% 18%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 42%, rgba(180, 250, 255, 0.22) 0%, rgba(0, 240, 255, 0.14) 28%, rgba(0, 240, 255, 0.06) 52%, transparent 74%);
+    radial-gradient(circle at 50% 42%, rgba(116, 192, 220, 0.22) 0%, rgba(90, 173, 207, 0.14) 28%, rgba(90, 173, 207, 0.06) 52%, transparent 74%);
   opacity: 0;
   filter: blur(24px);
   pointer-events: none;
@@ -44,7 +44,7 @@
   transform: translateX(-50%);
   width: 60%;
   height: 4px;
-  background: radial-gradient(ellipse, rgba(0, 240, 255, 0.4) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(90, 173, 207, 0.4) 0%, transparent 70%);
   border-radius: 50%;
   filter: blur(4px);
   pointer-events: none;
@@ -58,7 +58,7 @@
 .character-viewer--speaking::after {
   width: 72%;
   height: 10px;
-  background: radial-gradient(ellipse, rgba(0, 240, 255, 0.58) 0%, rgba(0, 240, 255, 0.22) 42%, transparent 80%);
+  background: radial-gradient(ellipse, rgba(90, 173, 207, 0.58) 0%, rgba(90, 173, 207, 0.22) 42%, transparent 80%);
   filter: blur(7px);
   animation: cv-speaking-floor 1.9s ease-in-out infinite;
 }
@@ -106,8 +106,8 @@
 .character-viewer__spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 240, 255, 0.15);
-  border-top-color: rgba(0, 240, 255, 0.7);
+  border: 3px solid rgba(90, 173, 207, 0.15);
+  border-top-color: rgba(90, 173, 207, 0.7);
   border-radius: 50%;
   animation: cv-spin 0.8s linear infinite;
 }
@@ -122,14 +122,14 @@
 
 .character-viewer__progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(0, 240, 255, 0.6), rgba(0, 240, 255, 0.9));
+  background: rgba(90, 173, 207, 0.8);
   border-radius: 2px;
   transition: width 300ms ease;
 }
 
 .character-viewer__loading-text {
   font-size: 11px;
-  color: rgba(0, 240, 255, 0.6);
+  color: rgba(90, 173, 207, 0.6);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -160,7 +160,7 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  background: rgba(90, 173, 207, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;

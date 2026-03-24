@@ -302,7 +302,7 @@ export default function SettingsDrawer({
           <button
             onClick={onReconnect}
             disabled={!isConnected}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-medium text-sm hover:from-indigo-600 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded bg-accent text-white font-medium text-sm hover:bg-accent-light transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Reconnect with new settings
           </button>
