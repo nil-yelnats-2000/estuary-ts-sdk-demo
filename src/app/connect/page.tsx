@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { decryptPayload, detectPayloadType, type PayloadType } from "@/lib/crypto";
 
-const DEFAULT_SERVER_URL = "https://api.estuary-ai.com";
+const IS_DEV = process.env.NODE_ENV === "development";
+const DEFAULT_SERVER_URL = IS_DEV ? "http://localhost:4001" : "https://api.estuary-ai.com";
 
 interface ConnectConfig {
   serverUrl: string;
@@ -73,6 +74,7 @@ export default function ConnectPage() {
   const [passphrase, setPassphrase] = useState("");
   const [passphraseError, setPassphraseError] = useState<string | null>(null);
   const [isDecrypting, setIsDecrypting] = useState(false);
+  const [isExchangingShare, setIsExchangingShare] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Restore saved config or detect shared link type
@@ -83,6 +85,7 @@ export default function ConnectPage() {
 
     if (shareToken) {
       setIsFromLink(true);
+      setIsExchangingShare(true);
       exchangeShareToken(shareToken)
         .then((creds) => {
           setConfig(creds);
@@ -91,6 +94,7 @@ export default function ConnectPage() {
         })
         .catch((err) => {
           setIsFromLink(false);
+          setIsExchangingShare(false);
           setHashError(
             err.message.includes("429")
               ? "Too many requests. Please try again in a minute."
@@ -156,6 +160,29 @@ export default function ConnectPage() {
     sessionStorage.setItem("estuary-config", JSON.stringify(config));
     router.push("/chat");
   };
+
+  // Show full-page loading for share links — user goes straight to chat
+  if (isExchangingShare) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 animate-pulse">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" x2="12" y1="19" y2="23" />
+              <line x1="8" x2="16" y1="23" y2="23" />
+            </svg>
+          </div>
+          <p className="text-sm text-muted animate-pulse">Connecting to character...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -229,6 +256,9 @@ export default function ConnectPage() {
                     }}
                     className="w-full px-3 py-2 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono"
                     placeholder="Enter passphrase..."
+                    autoComplete="off"
+                    data-1p-ignore
+                    data-lpignore="true"
                     autoFocus
                     required
                   />
@@ -255,15 +285,30 @@ export default function ConnectPage() {
 
           <form onSubmit={handleConnect} className="space-y-4" autoComplete="off">
             <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
+              {IS_DEV && (
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Server URL</label>
+                  <input
+                    type="text"
+                    value={config.serverUrl}
+                    onChange={(e) => setConfig({ ...config, serverUrl: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono"
+                    placeholder="http://localhost:4001"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-muted mb-1.5">API Key</label>
                 <div className="relative">
                   <input
-                    type={showApiKey ? "text" : "password"}
+                    type="text"
                     value={config.apiKey}
                     onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-                    className="w-full px-3 py-2 pr-10 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono"
+                    className={`w-full px-3 py-2 pr-10 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono ${!showApiKey ? "[-webkit-text-security:disc]" : ""}`}
                     placeholder="est_..."
+                    autoComplete="off"
+                    data-1p-ignore
+                    data-lpignore="true"
                     required
                   />
                   <button
@@ -354,6 +399,9 @@ export default function ConnectPage() {
                   }}
                   className="w-full px-3 py-2 rounded-lg bg-surface-light border border-border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition font-mono"
                   placeholder="Enter passphrase..."
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                 />
               </div>
             )}
