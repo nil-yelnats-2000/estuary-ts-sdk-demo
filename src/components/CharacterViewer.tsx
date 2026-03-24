@@ -176,7 +176,7 @@ export default function CharacterViewer({
   const isPreviewReady = modelStatus === "preview_ready";
 
   // Determine which model URL to use, proxied through our API
-  const rawModelUrl = modelUrl ?? (isPreviewReady || isGenerating ? previewModelUrl : null);
+  const rawModelUrl = modelUrl ?? (isPreviewReady || isGenerating ? previewModelUrl ?? null : null);
   const activeModelUrl = proxyUrl(rawModelUrl);
   const isPreviewModel = !modelUrl && !!previewModelUrl && (isPreviewReady || isGenerating);
   const hasModel = !!activeModelUrl;
