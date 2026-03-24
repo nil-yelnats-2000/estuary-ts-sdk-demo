@@ -4,6 +4,7 @@ import { useRef, useMemo, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import "./CharacterViewer.css";
 
 // ─── Helpers ────────────────────────────────────────────────────
@@ -171,6 +172,7 @@ export default function CharacterViewer({
   state,
   progress,
 }: CharacterViewerProps) {
+  const isMobile = useIsMobile();
   const isSpeaking = state === "speaking";
   const isGenerating = modelStatus === "generating";
   const isPreviewReady = modelStatus === "preview_ready";
@@ -210,7 +212,8 @@ export default function CharacterViewer({
       {hasModel && (
         <Canvas
           camera={{ position: [0, 0.3, 4.8], fov: 40 }}
-          gl={{ alpha: true, antialias: true }}
+          gl={{ alpha: true, antialias: !isMobile, stencil: false, depth: false }}
+          dpr={[1, 2]}
           style={{ background: "transparent" }}
         >
           <ambientLight intensity={0.6} />
