@@ -7,6 +7,7 @@ import {
   type SessionInfo,
   type BotResponse,
   type SttResponse,
+  type BotVoice,
 } from "@estuary-ai/sdk";
 
 export interface ChatMessage {
@@ -59,8 +60,13 @@ export function useEstuary() {
   const [isBotSpeaking, setIsBotSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastSttTextRef = useRef<string>("");
+  const voiceFinalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cleanup = useCallback(() => {
+    if (voiceFinalTimeoutRef.current) {
+      clearTimeout(voiceFinalTimeoutRef.current);
+      voiceFinalTimeoutRef.current = null;
+    }
     if (clientRef.current) {
       clientRef.current.disconnect();
       clientRef.current.removeAllListeners();
@@ -174,8 +180,35 @@ export function useEstuary() {
         }
       });
 
+      // Bot voice chunk detection — works for both WebSocket and LiveKit transports.
+      // With LiveKit, AudioPlayer events don't fire (audio plays via WebRTC tracks),
+      // so we detect speaking state from botVoice metadata events instead.
+      client.on("botVoice", (voice: BotVoice) => {
+        setIsBotSpeaking(true);
+        // Clear any pending "end of speaking" timeout
+        if (voiceFinalTimeoutRef.current) {
+          clearTimeout(voiceFinalTimeoutRef.current);
+          voiceFinalTimeoutRef.current = null;
+        }
+        if (voice.isFinal) {
+          // Final voice chunk received — audio may still be playing for ~2s.
+          // This timeout is cancelled if AudioPlayer fires audioPlaybackStarted
+          // (meaning WebSocket voice is handling playback lifecycle accurately).
+          voiceFinalTimeoutRef.current = setTimeout(() => {
+            setIsBotSpeaking(false);
+            voiceFinalTimeoutRef.current = null;
+          }, 2000);
+        }
+      });
+
       client.on("audioPlaybackStarted", () => {
         setIsBotSpeaking(true);
+        // AudioPlayer is handling playback — cancel the botVoice-based timeout
+        // since audioPlaybackComplete will fire at the correct time
+        if (voiceFinalTimeoutRef.current) {
+          clearTimeout(voiceFinalTimeoutRef.current);
+          voiceFinalTimeoutRef.current = null;
+        }
       });
 
       client.on("audioPlaybackComplete", () => {
@@ -184,6 +217,10 @@ export function useEstuary() {
 
       client.on("interrupt", () => {
         setIsBotSpeaking(false);
+        if (voiceFinalTimeoutRef.current) {
+          clearTimeout(voiceFinalTimeoutRef.current);
+          voiceFinalTimeoutRef.current = null;
+        }
       });
 
       client.on("error", (err) => {
@@ -240,6 +277,10 @@ export function useEstuary() {
   }, []);
 
   const stopVoice = useCallback(async () => {
+    if (voiceFinalTimeoutRef.current) {
+      clearTimeout(voiceFinalTimeoutRef.current);
+      voiceFinalTimeoutRef.current = null;
+    }
     await clientRef.current?.stopVoice();
     setIsVoiceActive(false);
     setIsMuted(false);
