@@ -14,6 +14,24 @@ interface ConnectConfig {
   playerId: string;
 }
 
+async function exchangeShareToken(token: string): Promise<ConnectConfig> {
+  const serverUrl = process.env.NEXT_PUBLIC_API_URL || DEFAULT_SERVER_URL;
+  const res = await fetch(`${serverUrl}/api/v1/share/${token}/exchange`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(detail || "Share link expired or invalid");
+  }
+  const data = await res.json();
+  return {
+    serverUrl: data.serverUrl || DEFAULT_SERVER_URL,
+    apiKey: data.apiKey,
+    characterId: data.characterId,
+    playerId: data.playerId,
+  };
+}
+
 function decodeLegacyConfig(hash: string): ConnectConfig | null {
   try {
     const raw = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -59,6 +77,29 @@ export default function ConnectPage() {
 
   // Restore saved config or detect shared link type
   useEffect(() => {
+    // Check for share token FIRST (takes priority over hash links)
+    const params = new URLSearchParams(window.location.search);
+    const shareToken = params.get("share");
+
+    if (shareToken) {
+      setIsFromLink(true);
+      exchangeShareToken(shareToken)
+        .then((creds) => {
+          setConfig(creds);
+          sessionStorage.setItem("estuary-config", JSON.stringify(creds));
+          router.push("/chat");
+        })
+        .catch((err) => {
+          setIsFromLink(false);
+          setHashError(
+            err.message.includes("429")
+              ? "Too many requests. Please try again in a minute."
+              : "Share link expired or invalid."
+          );
+        });
+      return; // Skip hash detection
+    }
+
     const hash = window.location.hash;
     const type = detectPayloadType(hash);
 
