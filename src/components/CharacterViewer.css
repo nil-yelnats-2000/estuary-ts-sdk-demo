@@ -10,18 +10,19 @@
 
 .character-viewer--speaking {
   filter:
-    drop-shadow(0 0 16px rgba(90, 173, 207, 0.22))
-    drop-shadow(0 0 36px rgba(90, 173, 207, 0.12));
+    drop-shadow(0 0 20px rgba(90, 173, 207, 0.4))
+    drop-shadow(0 0 48px rgba(90, 173, 207, 0.25));
 }
 
-/* Glow aura behind the model */
+/* Glow aura above the model canvas */
 .character-viewer::before {
   content: '';
   position: absolute;
   inset: 12% 16% 18%;
   border-radius: 50%;
+  z-index: 1;
   background:
-    radial-gradient(circle at 50% 42%, rgba(116, 192, 220, 0.22) 0%, rgba(90, 173, 207, 0.14) 28%, rgba(90, 173, 207, 0.06) 52%, transparent 74%);
+    radial-gradient(circle at 50% 42%, rgba(116, 192, 220, 0.35) 0%, rgba(90, 173, 207, 0.22) 28%, rgba(90, 173, 207, 0.1) 52%, transparent 74%);
   opacity: 0;
   filter: blur(24px);
   pointer-events: none;
@@ -31,17 +32,18 @@
 }
 
 .character-viewer--speaking::before {
-  opacity: 0.65;
+  opacity: 0.85;
   animation: cv-speaking-glow 1.9s cubic-bezier(0.37, 0, 0.2, 1) infinite;
 }
 
-/* Holographic floor glow */
+/* Holographic floor glow above the model canvas */
 .character-viewer::after {
   content: '';
   position: absolute;
   bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 1;
   width: 60%;
   height: 4px;
   background: radial-gradient(ellipse, rgba(90, 173, 207, 0.4) 0%, transparent 70%);
@@ -57,13 +59,15 @@
 
 .character-viewer--speaking::after {
   width: 72%;
-  height: 10px;
-  background: radial-gradient(ellipse, rgba(90, 173, 207, 0.58) 0%, rgba(90, 173, 207, 0.22) 42%, transparent 80%);
-  filter: blur(7px);
+  height: 12px;
+  background: radial-gradient(ellipse, rgba(90, 173, 207, 0.7) 0%, rgba(90, 173, 207, 0.35) 42%, transparent 80%);
+  filter: blur(8px);
   animation: cv-speaking-floor 1.9s ease-in-out infinite;
 }
 
 .character-viewer canvas {
+  position: relative;
+  z-index: 0;
   width: 100% !important;
   height: 100% !important;
   display: block;
@@ -71,23 +75,23 @@
 
 @keyframes cv-speaking-glow {
   0%, 100% {
-    opacity: 0.34;
-    transform: scale(0.92);
+    opacity: 0.5;
+    transform: scale(0.94);
   }
   50% {
-    opacity: 0.74;
-    transform: scale(1.05);
+    opacity: 0.95;
+    transform: scale(1.08);
   }
 }
 
 @keyframes cv-speaking-floor {
   0%, 100% {
-    opacity: 0.48;
+    opacity: 0.6;
     transform: translateX(-50%) scaleX(0.94);
   }
   50% {
-    opacity: 0.82;
-    transform: translateX(-50%) scaleX(1.05);
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1.08);
   }
 }
 
