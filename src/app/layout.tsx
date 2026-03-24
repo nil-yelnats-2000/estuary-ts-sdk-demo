@@ -13,8 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Estuary Voice Chat",
-  description: "Real-time AI voice & text conversation powered by Estuary",
+  title: "Estuary Share",
+  description: "Share and chat with Estuary AI characters",
 };
 
 export default function RootLayout({
