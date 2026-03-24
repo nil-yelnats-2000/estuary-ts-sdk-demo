@@ -9,6 +9,7 @@ import type { CharacterState } from "./CharacterAvatar";
 import MemoryPanel from "./MemoryPanel";
 import SettingsDrawer from "./SettingsDrawer";
 import dynamic from "next/dynamic";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const CharacterViewer = dynamic(() => import("./CharacterViewer"), { ssr: false });
 
@@ -88,25 +89,28 @@ export default function ChatInterface() {
   const [rightPanel, setRightPanel] = useState<"chat" | "memory">("chat");
   const [characterInfo, setCharacterInfo] = useState<CharacterInfo | null>(null);
   const [splitPct, setSplitPct] = useState(50);
+  const [showOverflow, setShowOverflow] = useState(false);
   const isDraggingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
+  const overflowRef = useRef<HTMLDivElement>(null);
   const connectAttemptedRef = useRef(false);
   const isConnected = connectionState === ConnectionState.Connected;
+  const isMobile = useIsMobile();
 
   // Read config from sessionStorage and auto-connect
   useEffect(() => {
     const saved = sessionStorage.getItem("estuary-config");
     if (!saved) {
-      router.replace("/connect");
+      router.replace("/");
       return;
     }
     try {
       const parsed = JSON.parse(saved) as EstuaryConfig;
       setConfig(parsed);
     } catch {
-      router.replace("/connect");
+      router.replace("/");
     }
   }, [router]);
 
@@ -196,6 +200,18 @@ export default function ChatInterface() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showShareModal]);
 
+  // Close overflow menu on click outside
+  useEffect(() => {
+    if (!showOverflow) return;
+    const handler = (e: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+        setShowOverflow(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showOverflow]);
+
   // Derive character state
   const hasPendingBotMessage = useMemo(
     () => messages.some((m) => m.role === "bot" && !m.isFinal),
@@ -228,7 +244,7 @@ export default function ChatInterface() {
 
   const handleDisconnect = useCallback(() => {
     disconnect();
-    router.push("/connect");
+    router.push("/");
   }, [disconnect, router]);
 
   const handleReconnect = useCallback(() => {
@@ -264,7 +280,7 @@ export default function ChatInterface() {
       const plaintext = JSON.stringify(config);
       const hash = await encryptWithPassphrase(plaintext, sharePassphrase.trim());
       setShareHash(hash);
-      setShareUrl(`${window.location.origin}/connect#${hash}`);
+      setShareUrl(`${window.location.origin}/#${hash}`);
     } catch {
       setShareError("Encryption failed. Please try again.");
     } finally {
@@ -307,14 +323,14 @@ export default function ChatInterface() {
   // Loading state
   if (!config) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-[100dvh] flex items-center justify-center">
         <p className="text-muted text-sm">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-[100dvh] flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface/50 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -333,7 +349,49 @@ export default function ChatInterface() {
             <h1 className="text-sm font-semibold">{characterInfo?.name ?? "Estuary Voice Chat"}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        {/* Mobile header actions */}
+        <div className="flex md:hidden items-center gap-2">
+          <ConnectionBadge state={connectionState} />
+          <div className="relative" ref={overflowRef}>
+            <button
+              onClick={() => setShowOverflow(!showOverflow)}
+              className="h-11 w-11 flex items-center justify-center rounded-lg border border-border text-muted hover:text-foreground transition"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="1.5"/>
+                <circle cx="12" cy="12" r="1.5"/>
+                <circle cx="12" cy="19" r="1.5"/>
+              </svg>
+            </button>
+
+            {showOverflow && (
+              <div className="absolute right-0 top-12 w-48 rounded-xl border border-border bg-surface shadow-xl z-50 py-1">
+                <button onClick={() => { setRightPanel(p => p === "memory" ? "chat" : "memory"); setShowOverflow(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
+                  {rightPanel === "memory" ? "Chat" : "Memory Map"}
+                </button>
+                <button onClick={() => { setShowShareModal(true); setShowOverflow(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
+                  Share
+                </button>
+                {process.env.NODE_ENV === "development" && (
+                  <button onClick={() => { setShowSettings(true); setShowOverflow(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
+                    Settings
+                  </button>
+                )}
+                <div className="border-t border-border my-1" />
+                <button onClick={() => { handleDisconnect(); setShowOverflow(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-danger hover:bg-danger/10 transition">
+                  Disconnect
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop header actions */}
+        <div className="hidden md:flex items-center gap-3">
           <ConnectionBadge state={connectionState} />
           <button
             onClick={() => setRightPanel(rightPanel === "memory" ? "chat" : "memory")}
@@ -402,7 +460,7 @@ export default function ChatInterface() {
 
       {/* Share modal - rendered fixed so it's never clipped */}
       {showShareModal && (
-        <div ref={shareRef} className="fixed top-14 right-4 w-96 rounded-xl border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
+        <div ref={shareRef} className="fixed top-14 left-2 right-2 md:left-auto md:right-4 md:w-96 rounded-xl border border-border bg-surface shadow-xl z-50 animate-fade-in-up">
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Share Session</p>
@@ -519,9 +577,12 @@ export default function ChatInterface() {
       )}
 
       {/* Split-screen content */}
-      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden">
+      <div ref={splitContainerRef} className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left panel: Character */}
-        <div style={{ width: `${splitPct}%` }} className="flex-shrink-0 flex flex-col items-center justify-center bg-gradient-to-b from-surface to-background relative">
+        <div
+          className="flex-shrink-0 flex flex-col items-center justify-center bg-gradient-to-b from-surface to-background relative h-[33vh] md:h-auto"
+          style={isMobile ? undefined : { width: `${splitPct}%` }}
+        >
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-indigo-600/5 rounded-full blur-3xl" />
             <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-violet-600/5 rounded-full blur-3xl" />
@@ -544,7 +605,7 @@ export default function ChatInterface() {
         <div
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
-          className="w-1.5 flex-shrink-0 cursor-col-resize relative group"
+          className="hidden md:block w-1.5 flex-shrink-0 cursor-col-resize relative group"
         >
           <div className="absolute inset-0 bg-border group-hover:bg-accent/50 transition-colors" />
           <div className="absolute inset-y-0 -left-1 -right-1" />
@@ -625,7 +686,7 @@ export default function ChatInterface() {
                       <button
                         type="submit"
                         disabled={!isConnected || !textInput.trim()}
-                        className="rounded-full h-8 w-8 p-0 flex items-center justify-center bg-accent text-white hover:bg-accent-light transition disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="rounded-full h-11 w-11 md:h-8 md:w-8 p-0 flex items-center justify-center bg-accent text-white hover:bg-accent-light transition disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Send"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -645,7 +706,7 @@ export default function ChatInterface() {
                                 type="button"
                                 onClick={toggleMute}
                                 disabled={isSuppressed}
-                                className={`rounded-full h-8 w-8 p-0 flex items-center justify-center transition-all ${
+                                className={`rounded-full h-11 w-11 md:h-8 md:w-8 p-0 flex items-center justify-center transition-all ${
                                   isSuppressed
                                     ? "bg-violet-600/20 text-violet-400 cursor-not-allowed opacity-75"
                                     : showMuted
@@ -675,7 +736,7 @@ export default function ChatInterface() {
                             <button
                               type="button"
                               onClick={interruptBot}
-                              className="rounded-full h-8 w-8 p-0 flex items-center justify-center bg-danger/20 text-danger hover:bg-danger/30 transition-all"
+                              className="rounded-full h-11 w-11 md:h-8 md:w-8 p-0 flex items-center justify-center bg-danger/20 text-danger hover:bg-danger/30 transition-all"
                               title="Interrupt"
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -688,7 +749,7 @@ export default function ChatInterface() {
                           <button
                             type="button"
                             onClick={stopVoice}
-                            className="rounded-full h-8 w-8 p-0 flex items-center justify-center bg-danger/20 text-danger hover:bg-danger/30 transition-all"
+                            className="rounded-full h-11 w-11 md:h-8 md:w-8 p-0 flex items-center justify-center bg-danger/20 text-danger hover:bg-danger/30 transition-all"
                             title="End Voice Call"
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -703,7 +764,7 @@ export default function ChatInterface() {
                           type="button"
                           onClick={startVoice}
                           disabled={!isConnected}
-                          className="rounded-full h-8 w-8 p-0 flex items-center justify-center bg-surface border border-border text-muted hover:text-accent-light hover:border-accent/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="rounded-full h-11 w-11 md:h-8 md:w-8 p-0 flex items-center justify-center bg-surface border border-border text-muted hover:text-accent-light hover:border-accent/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                           title="Start Voice Call"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
