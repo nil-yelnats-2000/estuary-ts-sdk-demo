@@ -382,21 +382,10 @@ export default function ChatInterface() {
               <path d="M12 8h.01" />
             </svg>
           </button>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 max-w-[55%] pointer-events-none">
-            <div className="flex items-center gap-2 min-w-0">
-              {characterInfo?.avatar ? (
-                <img
-                  src={characterInfo.avatar}
-                  alt={characterInfo.name}
-                  className="w-8 h-8 rounded-lg object-cover shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                  {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
-                </div>
-              )}
-              <h1 className="text-sm font-semibold truncate">{characterInfo?.name ?? "Estuary Voice Chat"}</h1>
-            </div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center max-w-[70%] pointer-events-none">
+            <h1 className="text-lg font-semibold truncate text-center">
+              {characterInfo?.name ?? "Estuary Voice Chat"}
+            </h1>
           </div>
           <div className="flex items-center gap-2 shrink-0 z-10">
             <ConnectionBadge state={connectionState} />
@@ -450,26 +439,15 @@ export default function ChatInterface() {
           </div>
         </div>
 
-        {/* Desktop: centered title over model col | chat col spacer | actions (sidebar col) */}
+        {/* Desktop: character name centered over model column | chat col spacer | actions (sidebar col) */}
         <div className="hidden md:flex items-center w-full">
           <div
-            className="flex-shrink-0 min-w-0 flex justify-center items-center gap-3 px-2"
+            className="flex-shrink-0 min-w-0 flex justify-center items-center px-2"
             style={{ width: `${splitPct}%` }}
           >
-            <div className="flex items-center gap-3 min-w-0 max-w-full">
-              {characterInfo?.avatar ? (
-                <img
-                  src={characterInfo.avatar}
-                  alt={characterInfo.name}
-                  className="w-8 h-8 rounded-lg object-cover shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                  {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
-                </div>
-              )}
-              <h1 className="text-sm font-semibold truncate">{characterInfo?.name ?? "Estuary Voice Chat"}</h1>
-            </div>
+            <h1 className="text-lg font-semibold text-center truncate max-w-full px-1">
+              {characterInfo?.name ?? "Estuary Voice Chat"}
+            </h1>
           </div>
           <div className="flex-1 min-w-0" aria-hidden="true" />
           <div className="w-1/5 flex-shrink-0 flex justify-end items-center gap-3 pl-2">
