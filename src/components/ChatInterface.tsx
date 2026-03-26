@@ -40,6 +40,33 @@ function TypingIndicator() {
   );
 }
 
+function CharacterInfoBlock({ characterInfo }: { characterInfo: CharacterInfo | null }) {
+  const name = characterInfo?.name ?? "Estuary Voice Chat";
+  return (
+    <div className="flex flex-col items-center text-center gap-3 px-2">
+      {characterInfo?.avatar ? (
+        <img src={characterInfo.avatar} alt={name} className="w-20 h-20 rounded-xl object-cover border border-border" />
+      ) : (
+        <div className="w-20 h-20 rounded-xl bg-accent flex items-center justify-center text-white text-2xl font-semibold border border-border">
+          {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
+        </div>
+      )}
+      <h2 className="text-lg font-semibold text-foreground leading-tight">{name}</h2>
+      {characterInfo?.tagline ? (
+        <p className="text-sm text-foreground leading-relaxed">{characterInfo.tagline}</p>
+      ) : null}
+      <a
+        href="https://www.estuary-ai.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 w-full text-center px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-light transition"
+      >
+        Build your own agent on Estuary
+      </a>
+    </div>
+  );
+}
+
 function deriveCharacterState(
   isVoiceActive: boolean,
   isBotSpeaking: boolean,
@@ -89,13 +116,15 @@ export default function ChatInterface() {
   const [sharePassphrase, setSharePassphrase] = useState("");
   const [rightPanel, setRightPanel] = useState<"chat" | "memory">("chat");
   const [characterInfo, setCharacterInfo] = useState<CharacterInfo | null>(null);
-  const [splitPct, setSplitPct] = useState(50);
+  const [splitPct, setSplitPct] = useState(40);
   const [showOverflow, setShowOverflow] = useState(false);
+  const [showInfoDrawer, setShowInfoDrawer] = useState(false);
   const isDraggingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
   const overflowRef = useRef<HTMLDivElement>(null);
+  const infoDrawerRef = useRef<HTMLDivElement>(null);
   const connectAttemptedRef = useRef(false);
   const isConnected = connectionState === ConnectionState.Connected;
   const isMobile = useIsMobile();
@@ -168,7 +197,7 @@ export default function ChatInterface() {
       if (!isDraggingRef.current || !splitContainerRef.current) return;
       const rect = splitContainerRef.current.getBoundingClientRect();
       const pct = ((clientX - rect.left) / rect.width) * 100;
-      setSplitPct(Math.min(80, Math.max(20, pct)));
+      setSplitPct(Math.min(58, Math.max(20, pct)));
     };
 
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientX);
@@ -337,136 +366,180 @@ export default function ChatInterface() {
   return (
     <div className="h-[100dvh] flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface flex-shrink-0">
-        <div className="flex items-center gap-3">
-          {characterInfo?.avatar ? (
-            <img
-              src={characterInfo.avatar}
-              alt={characterInfo.name}
-              className="w-8 h-8 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-white text-sm font-semibold">
-              {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
-            </div>
-          )}
-          <div>
-            <h1 className="text-sm font-semibold">{characterInfo?.name ?? "Estuary Voice Chat"}</h1>
-          </div>
-        </div>
-        {/* Mobile header actions */}
-        <div className="flex md:hidden items-center gap-2">
-          <ConnectionBadge state={connectionState} />
-          <div className="relative" ref={overflowRef}>
-            <button
-              onClick={() => setShowOverflow(!showOverflow)}
-              className="h-11 w-11 flex items-center justify-center rounded-lg border border-border text-muted hover:text-foreground transition"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="5" r="1.5"/>
-                <circle cx="12" cy="12" r="1.5"/>
-                <circle cx="12" cy="19" r="1.5"/>
-              </svg>
-            </button>
-
-            {showOverflow && (
-              <div className="absolute right-0 top-12 w-48 rounded border border-border bg-surface shadow-xl z-50 py-1">
-                {process.env.NODE_ENV === "development" && (
-                  <>
-                    <button onClick={() => { setRightPanel(p => p === "memory" ? "chat" : "memory"); setShowOverflow(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
-                      {rightPanel === "memory" ? "Chat" : "Memory Map"}
-                    </button>
-                    <button onClick={() => { setShowShareModal(true); setShowOverflow(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
-                      Share
-                    </button>
-                  </>
-                )}
-                {process.env.NODE_ENV === "development" && (
-                  <button onClick={() => { setShowSettings(true); setShowOverflow(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-surface-light transition">
-                    Settings
-                  </button>
-                )}
-                <div className="border-t border-border my-1" />
-                <button onClick={() => { handleDisconnect(); setShowOverflow(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-danger hover:bg-danger/10 transition">
-                  Disconnect
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Desktop header actions */}
-        <div className="hidden md:flex items-center gap-3">
-          <ConnectionBadge state={connectionState} />
-          {process.env.NODE_ENV === "development" && (
-            <>
-              <button
-                onClick={() => setRightPanel(rightPanel === "memory" ? "chat" : "memory")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition ${
-                  rightPanel === "memory"
-                    ? "border-accent/50 text-accent-light bg-accent/10"
-                    : "border-border text-muted hover:text-accent-light hover:border-accent/50"
-                }`}
-                title={rightPanel === "memory" ? "Back to Chat" : "Memory Map"}
-              >
-                {rightPanel === "memory" ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                    <path d="M2 12h20" />
-                  </svg>
-                )}
-                {rightPanel === "memory" ? "Chat" : "Memory"}
-              </button>
-              <div className="relative" ref={shareRef}>
-                <button
-                  onClick={() => setShowShareModal(!showShareModal)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition ${
-                    showShareModal
-                      ? "border-accent/50 text-accent-light bg-accent/10"
-                      : "border-border text-muted hover:text-accent-light hover:border-accent/50"
-                  }`}
-                  title="Share"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="18" cy="5" r="3" />
-                    <circle cx="6" cy="12" r="3" />
-                    <circle cx="18" cy="19" r="3" />
-                    <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
-                    <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
-                  </svg>
-                  Share
-                </button>
-              </div>
-            </>
-          )}
-          {process.env.NODE_ENV === "development" && (
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-accent-light hover:border-accent/50 transition"
-              title="Settings"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-              Settings
-            </button>
-          )}
+      <header className="border-b border-border bg-surface flex-shrink-0 px-5 py-3">
+        {/* Mobile: centered avatar/name over chat area; actions on sides */}
+        <div className="flex md:hidden items-center justify-between gap-2 relative min-h-[44px]">
           <button
-            onClick={handleDisconnect}
-            className="px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-danger hover:border-danger/50 transition"
+            type="button"
+            onClick={() => setShowInfoDrawer(true)}
+            className="h-11 w-11 flex items-center justify-center rounded-lg border border-border text-muted hover:text-foreground transition shrink-0 z-10"
+            title="Character info"
+            aria-label="Character info"
           >
-            Disconnect
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
           </button>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 max-w-[55%] pointer-events-none">
+            <div className="flex items-center gap-2 min-w-0">
+              {characterInfo?.avatar ? (
+                <img
+                  src={characterInfo.avatar}
+                  alt={characterInfo.name}
+                  className="w-8 h-8 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                  {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
+                </div>
+              )}
+              <h1 className="text-sm font-semibold truncate">{characterInfo?.name ?? "Estuary Voice Chat"}</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 z-10">
+            <ConnectionBadge state={connectionState} />
+            <div className="relative" ref={overflowRef}>
+              <button
+                onClick={() => setShowOverflow(!showOverflow)}
+                className="h-11 w-11 flex items-center justify-center rounded-lg border border-border text-muted hover:text-foreground transition"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="1.5"/>
+                  <circle cx="12" cy="12" r="1.5"/>
+                  <circle cx="12" cy="19" r="1.5"/>
+                </svg>
+              </button>
+
+              {showOverflow && (
+                <div className="absolute right-0 top-12 w-48 rounded border border-border bg-surface shadow-xl z-50 py-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowInfoDrawer(true); setShowOverflow(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-surface-light transition"
+                  >
+                    Character info
+                  </button>
+                  {process.env.NODE_ENV === "development" && (
+                    <>
+                      <button onClick={() => { setRightPanel(p => p === "memory" ? "chat" : "memory"); setShowOverflow(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-surface-light transition">
+                        {rightPanel === "memory" ? "Chat" : "Memory Map"}
+                      </button>
+                      <button onClick={() => { setShowShareModal(true); setShowOverflow(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-surface-light transition">
+                        Share
+                      </button>
+                    </>
+                  )}
+                  {process.env.NODE_ENV === "development" && (
+                    <button onClick={() => { setShowSettings(true); setShowOverflow(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-surface-light transition">
+                      Settings
+                    </button>
+                  )}
+                  <div className="border-t border-border my-1" />
+                  <button onClick={() => { handleDisconnect(); setShowOverflow(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-surface-light transition">
+                    Disconnect
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop: centered title over model col | chat col spacer | actions (sidebar col) */}
+        <div className="hidden md:flex items-center w-full">
+          <div
+            className="flex-shrink-0 min-w-0 flex justify-center items-center gap-3 px-2"
+            style={{ width: `${splitPct}%` }}
+          >
+            <div className="flex items-center gap-3 min-w-0 max-w-full">
+              {characterInfo?.avatar ? (
+                <img
+                  src={characterInfo.avatar}
+                  alt={characterInfo.name}
+                  className="w-8 h-8 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded bg-accent flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                  {characterInfo?.name?.charAt(0).toUpperCase() ?? "E"}
+                </div>
+              )}
+              <h1 className="text-sm font-semibold truncate">{characterInfo?.name ?? "Estuary Voice Chat"}</h1>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0" aria-hidden="true" />
+          <div className="w-1/5 flex-shrink-0 flex justify-end items-center gap-3 pl-2">
+            <ConnectionBadge state={connectionState} />
+            {process.env.NODE_ENV === "development" && (
+              <>
+                <button
+                  onClick={() => setRightPanel(rightPanel === "memory" ? "chat" : "memory")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition ${
+                    rightPanel === "memory"
+                      ? "border-accent/50 text-white bg-accent/10"
+                      : "border-border text-white hover:bg-surface-light hover:border-border"
+                  }`}
+                  title={rightPanel === "memory" ? "Back to Chat" : "Memory Map"}
+                >
+                  {rightPanel === "memory" ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                      <path d="M2 12h20" />
+                    </svg>
+                  )}
+                  {rightPanel === "memory" ? "Chat" : "Memory"}
+                </button>
+                <div className="relative" ref={shareRef}>
+                  <button
+                    onClick={() => setShowShareModal(!showShareModal)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition ${
+                      showShareModal
+                        ? "border-accent/50 text-white bg-accent/10"
+                        : "border-border text-white hover:bg-surface-light hover:border-border"
+                    }`}
+                    title="Share"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+                      <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+                    </svg>
+                    Share
+                  </button>
+                </div>
+              </>
+            )}
+            {process.env.NODE_ENV === "development" && (
+              <button
+                onClick={() => setShowSettings(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border text-white hover:bg-surface-light hover:border-border transition"
+                title="Settings"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Settings
+              </button>
+            )}
+            <button
+              onClick={handleDisconnect}
+              className="px-3 py-1.5 text-xs rounded-lg border border-border text-white hover:bg-surface-light hover:border-border transition"
+            >
+              Disconnect
+            </button>
+          </div>
         </div>
       </header>
 
@@ -639,7 +712,9 @@ export default function ChatInterface() {
                       }`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                        className={`${
+                          msg.role === "user" ? "max-w-[75%]" : "max-w-[85%]"
+                        } rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                           msg.role === "user"
                             ? "bg-accent text-white rounded-br-md"
                             : "bg-surface-light border border-border rounded-bl-md"
@@ -790,7 +865,47 @@ export default function ChatInterface() {
             <MemoryPanel getClient={getClient} />
           )}
         </div>
+
+        {/* Column 3: Character info (desktop) */}
+        <aside className="hidden md:flex flex-col flex-shrink-0 w-1/5 border-l border-border bg-surface overflow-y-auto">
+          <div className="sticky top-0 py-6 px-4">
+            <CharacterInfoBlock characterInfo={characterInfo} />
+          </div>
+        </aside>
       </div>
+
+      {/* Mobile: character info drawer */}
+      {showInfoDrawer && (
+        <>
+          <button
+            type="button"
+            aria-label="Close character info"
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setShowInfoDrawer(false)}
+          />
+          <div
+            ref={infoDrawerRef}
+            className="fixed top-0 right-0 h-full w-[min(100%,20rem)] z-50 md:hidden border-l border-border bg-surface shadow-xl flex flex-col transition-transform duration-200 ease-out translate-x-0"
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <span className="text-sm font-medium">Character</span>
+              <button
+                type="button"
+                onClick={() => setShowInfoDrawer(false)}
+                className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-light transition"
+                aria-label="Close"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-4">
+              <CharacterInfoBlock characterInfo={characterInfo} />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Settings drawer */}
       <SettingsDrawer
